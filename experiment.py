@@ -19,12 +19,25 @@ a_star_1 = 'A-star 1-norm'
 taxi_tot = 'taxicab total'
 a_star_t = 'A-star,  taxi'
 
-heuristics = [greedy_0, greedy_1, taxi_tot, a_star_0, a_star_1, a_star_t]
+w_a_star_0 = 'weighted 0-norm A-star'
+w_a_star_1 = 'weighted 1-norm A-star'
+w_a_star_t = 'weighted taxi  A -star'
+
+weight_factor = 1.1
+heuristics = [greedy_0, 
+              greedy_1, 
+              taxi_tot, 
+            #   a_star_0, 
+            #   a_star_1, 
+            #   a_star_t,
+              w_a_star_0,
+              w_a_star_1,
+              w_a_star_t]
 
 SIDE = 3
 DRAW = False
 TRUNCATE = False
-NUM_RUNS = 10
+NUM_RUNS = 1
 
 
 HOME = (np.arange(SIDE**2)+1)%(SIDE**2)
@@ -358,6 +371,12 @@ def heur(s: puzzle_state, search_type: str):
         return manhattan_total(s.config)
     elif search_type == a_star_t:
         return s.d + manhattan_total(s.config)
+    elif search_type == w_a_star_0:
+        return s.d + weight_factor*la.norm( HOME - flattened, 0 )
+    elif search_type == w_a_star_1:
+        return s.d + weight_factor*la.norm( HOME - flattened, 1 )
+    elif search_type == w_a_star_t:
+        return s.d + weight_factor*manhattan_total(s.config)
     else:
         return 1
 
@@ -454,8 +473,8 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
 path = '/Users/calebhill/Documents/misc_coding/search/experimental_outputs.csv'
 
 for i in range(NUM_RUNS):
-    initial_state = random_state()
-    print('beginning problem number:', i,'\n')
+    initial_state = puzzle_state(np.array([5,7,3,1,8,4,6,2,0]))
+    print('-------- Beginning problem number:', i,'--------\n')
     for st in heuristics:
         find_sol(initial_state, path, search_type=st, upper_limit=10000)
 print('-------- Experiment finished. --------\n\n')
