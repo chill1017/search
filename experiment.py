@@ -24,6 +24,7 @@ heuristics = [greedy_0, greedy_1, taxi_tot, a_star_0, a_star_1, a_star_t]
 SIDE = 3
 DRAW = False
 TRUNCATE = False
+NUM_RUNS = 10
 
 
 HOME = (np.arange(SIDE**2)+1)%(SIDE**2)
@@ -450,10 +451,11 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
     return output
 
 
-path = '/Users/calebhill/Documents/misc_coding/graph/experimental_outputs.csv'
+path = '/Users/calebhill/Documents/misc_coding/search/experimental_outputs.csv'
 
-for i in range(3):
+for i in range(NUM_RUNS):
     initial_state = random_state()
+    print('beginning problem number:', i,'\n')
     for st in heuristics:
         find_sol(initial_state, path, search_type=st, upper_limit=10000)
 print('-------- Experiment finished. --------\n\n')
