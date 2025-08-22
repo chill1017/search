@@ -1,4 +1,3 @@
-print(UNDER_ CONSTRUCTION)
 import numpy as np
 from numpy import linalg as la
 import pandas as pd
@@ -14,9 +13,9 @@ a_star_0 = 'A-star 0-norm'
 taxi_tot = 'taxicab total'
 a_star_t = 'A-star,  taxi'
 
-heuristics = [greedy_0, 
+heuristics = [#greedy_0, 
               taxi_tot, 
-              a_star_0,
+              #a_star_0,
               a_star_t]
 
 SIDE = int(sys.argv[1])
@@ -298,6 +297,7 @@ def get_path(end: puzzle_state):
 def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, upper_limit: int, focus_factor: float):
     qew = [init_state]
     focus = [init_state]
+    min_heur = heur(init_state, search_type=search_type)
     found_states = []
     num_states_explored = 1
     sol_found = False
@@ -308,22 +308,29 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
     else:
         weight = -1
 
-    print('searching...\t\tsearch algorithm:', search_type)
+    print('searching...\t\tsearch algorithm: focused', search_type)
     start_time = datetime.datetime.now()
     while sol_found is False:
-        # pop qew
-        here = qew[0]
+        # pop focus
+        if len(focus) > 0:
+            here = focus[0]
+            focus = np.delete(focus,0)
+        else:
+            here = qew[0]
+            qew = np.delete(qew,0)
         found_states = np.append(found_states, here)
-        qew = np.delete(qew,0)
 
         # put nbrs in qew
-        nbrs = moves(here)
+        nbrs = moves(here) 
         for n in nbrs:
             if not is_found(found_states, n):
                 qew = np.append(qew, n)
-            # put good neighbors in focus
+                if heur(n, search_type=search_type) <= FOCUS_FACTOR*min_heur:
+                    focus = np.append(focus, n)
 
         qew = sorted(qew, key=lambda a: heur(a,search_type))
+        min_heur = heur(qew[0], search_type=search_type)
+        focus = sorted(focus, key=lambda a: heur(a,search_type))
         # sort focus
 
         num_states_explored = num_states_explored+1
@@ -386,16 +393,13 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
 
 path = '/Users/calebhill/Documents/misc_coding/search/focused_experimental_outputs.csv'
 
-# start_from = puzzle_state(np.array([4,6,5,8,7,1,0,3,2]))
-# find_sol(start_from, path, search_type=a_star_t, upper_limit=10000)
-
 print('**************************************************')
-print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, 'and A-star weight of', A_STAR_FACTOR)
+print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, '\tA-star weight of', A_STAR_FACTOR,'\tfocus factor of', FOCUS_FACTOR)
 for i in range(NUM_RUNS):
     initial_state = random_state()
     print('-------- Beginning problem number:', i,'--------\n')
     for st in heuristics:
         fresh_copy = initial_state.copy()
-        find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=5000, focus_factor=FOCUS_FACTOR)
+        find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=3000, focus_factor=FOCUS_FACTOR)
 print('-------- Experiment finished. --------\n\n')
 
