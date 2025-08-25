@@ -13,8 +13,10 @@ a_star_0 = 'A-star 0-norm'
 taxi_tot = 'taxicab total'
 a_star_t = 'A-star,  taxi'
 
+inv_dist = 'A-star inv d'
+
 heuristics = [#greedy_0, 
-              taxi_tot, 
+            #   taxi_tot, 
               #a_star_0,
               a_star_t]
 
@@ -269,6 +271,19 @@ def manhattan_total(arr):
                 sum = sum + np.abs( int((val-1)/SIDE) - i) + np.abs( ((val-1)%SIDE) - j)
     return sum
 
+def horz_inv(arr: np.ndarray):
+    sum = 0
+    flat = arr.copy()
+    flat = arr.reshape(SIDE**2,)
+    for i in range(SIDE**2):
+        for j in range(i+1,SIDE**2):
+            if flat[i] > flat[j] and (flat[j]!=0) and (flat[i]!=0):
+                sum = sum + 1
+    return sum
+
+def inversion_dist(arr: np.ndarray):
+    return horz_inv(arr) + horz_inv(arr.transpose)
+
 def heur(s: puzzle_state, search_type: str):
     flattened = s.config.copy()
     flattened = flattened.reshape(SIDE**2,)
@@ -281,6 +296,8 @@ def heur(s: puzzle_state, search_type: str):
         return manhattan_total(s.config)
     elif search_type == a_star_t:
         return s.d + A_STAR_FACTOR*manhattan_total(s.config)
+    elif search_type == inv_dist:
+        return s.d + A_STAR_FACTOR*inversion_dist(s.config.copy())
     else:
         return 1
 
@@ -393,7 +410,7 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
 
 path = '/Users/calebhill/Documents/misc_coding/search/focused_experimental_outputs.csv'
 
-print('**************************************************')
+print('\n**************************************************')
 print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, '\tA-star weight of', A_STAR_FACTOR,'\tfocus factor of', FOCUS_FACTOR)
 for i in range(NUM_RUNS):
     initial_state = random_state()
@@ -402,4 +419,3 @@ for i in range(NUM_RUNS):
         fresh_copy = initial_state.copy()
         find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=3000, focus_factor=FOCUS_FACTOR)
 print('-------- Experiment finished. --------\n\n')
-
