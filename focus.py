@@ -7,18 +7,13 @@ import time
 import sys
 import os
 
-greedy_0 = 'greedy 0-norm'
-a_star_0 = 'A-star 0-norm'
+taxi = 'A-star taxi'
+inv_dist = 'A-star inv'
+taxi_inv = 'A-star taxi+inv'
 
-taxi_tot = 'taxicab total'
-a_star_t = 'A-star,  taxi'
-
-inv_dist = 'A-star inv d'
-
-heuristics = [#greedy_0, 
-            #   taxi_tot, 
-              #a_star_0,
-              a_star_t]
+heuristics = [taxi, 
+              inv_dist,
+              taxi_inv]
 
 SIDE = int(sys.argv[1])
 NUM_RUNS = int(sys.argv[2])
@@ -271,7 +266,7 @@ def manhattan_total(arr):
                 sum = sum + np.abs( int((val-1)/SIDE) - i) + np.abs( ((val-1)%SIDE) - j)
     return sum
 
-def horz_inv(arr: np.ndarray):
+def horz_inv(arr):
     sum = 0
     flat = arr.copy()
     flat = arr.reshape(SIDE**2,)
@@ -281,8 +276,8 @@ def horz_inv(arr: np.ndarray):
                 sum = sum + 1
     return sum
 
-def inversion_dist(arr: np.ndarray):
-    return horz_inv(arr) + horz_inv(arr.transpose)
+def inversion_dist(arr):
+    return horz_inv(arr) + horz_inv(arr.transpose())
 
 def heur(s: puzzle_state, search_type: str):
     flattened = s.config.copy()
@@ -297,7 +292,9 @@ def heur(s: puzzle_state, search_type: str):
     elif search_type == a_star_t:
         return s.d + A_STAR_FACTOR*manhattan_total(s.config)
     elif search_type == inv_dist:
-        return s.d + A_STAR_FACTOR*inversion_dist(s.config.copy())
+        return s.d + A_STAR_FACTOR*inversion_dist(s.config)
+    elif search_type == md_inv:
+        return manhattan_total(s.config) + inversion_dist(s.config)
     else:
         return 1
 
@@ -417,5 +414,5 @@ for i in range(NUM_RUNS):
     print('-------- Beginning problem number:', i,'--------\n')
     for st in heuristics:
         fresh_copy = initial_state.copy()
-        find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=3000, focus_factor=FOCUS_FACTOR)
+        find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=2500, focus_factor=FOCUS_FACTOR)
 print('-------- Experiment finished. --------\n\n')
