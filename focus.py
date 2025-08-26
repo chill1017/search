@@ -8,11 +8,11 @@ import sys
 import os
 
 taxi = 'A-star taxi'
-inv_dist = 'A-star inv'
+inv = 'A-star inv'
 taxi_inv = 'A-star taxi+inv'
 
-heuristics = [taxi, 
-              inv_dist,
+heuristics = [#taxi, 
+              #inv,
               taxi_inv]
 
 SIDE = int(sys.argv[1])
@@ -283,18 +283,12 @@ def heur(s: puzzle_state, search_type: str):
     flattened = s.config.copy()
     flattened = flattened.reshape(SIDE**2,)
 
-    if search_type == greedy_0:
-        return la.norm( HOME - flattened, 0 )
-    elif search_type == a_star_0:
-        return s.d + A_STAR_FACTOR*la.norm( HOME - flattened, 0 )
-    elif search_type == taxi_tot:
-        return manhattan_total(s.config)
-    elif search_type == a_star_t:
+    if search_type == taxi:
         return s.d + A_STAR_FACTOR*manhattan_total(s.config)
-    elif search_type == inv_dist:
+    elif search_type == inv:
         return s.d + A_STAR_FACTOR*inversion_dist(s.config)
-    elif search_type == md_inv:
-        return manhattan_total(s.config) + inversion_dist(s.config)
+    elif search_type == taxi_inv:
+        return s.d +A_STAR_FACTOR*(manhattan_total(s.config) + inversion_dist(s.config) )
     else:
         return 1
 
@@ -317,10 +311,8 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
     sol_found = False
     flat_init = init_state.config.copy()
     flat_init = flat_init.reshape(SIDE**2,)
-    if search_type==a_star_0 or search_type==a_star_t:
-        weight = A_STAR_FACTOR
-    else:
-        weight = -1
+    weight = A_STAR_FACTOR
+
 
     print('searching...\t\tsearch algorithm: focused', search_type)
     start_time = datetime.datetime.now()
@@ -348,7 +340,7 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
         # sort focus
 
         num_states_explored = num_states_explored+1
-        if num_states_explored%1000==0:
+        if num_states_explored%100==0:
             print(num_states_explored, 'states expolored.')
         if num_states_explored == upper_limit:
             print('experiment timeout.\n')
@@ -407,12 +399,12 @@ def find_sol_w_focus(init_state: puzzle_state, path: str, search_type: str, uppe
 
 path = '/Users/calebhill/Documents/misc_coding/search/focused_experimental_outputs.csv'
 
-print('\n**************************************************')
+print('\n****************************************************************************')
 print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, '\tA-star weight of', A_STAR_FACTOR,'\tfocus factor of', FOCUS_FACTOR)
 for i in range(NUM_RUNS):
     initial_state = random_state()
-    print('-------- Beginning problem number:', i,'--------\n')
+    print('---------------- Beginning problem number:', i,'----------------\n')
     for st in heuristics:
         fresh_copy = initial_state.copy()
         find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=2500, focus_factor=FOCUS_FACTOR)
-print('-------- Experiment finished. --------\n\n')
+print('---------------- Experiment finished. ----------------\n\n')
