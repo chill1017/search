@@ -1,3 +1,6 @@
+import puzzle_utilities as util
+import numpy as np
+
 # chatGPT output for visualizing:
 import tkinter as tk
 import time
@@ -6,7 +9,7 @@ TILE_SIZE = 80  # pixels
 ANIM_STEPS = 10  # frames for sliding
 ANIM_DELAY = 0.75  # seconds per frame
 
-def draw_puzzle(canvas, state: puzzle_state, tiles):
+def draw_puzzle(canvas, state: util.puzzle_state, tiles):
     """Draw the puzzle tiles according to arr."""
     arr = state.config
     canvas.delete("all")
@@ -21,7 +24,7 @@ def draw_puzzle(canvas, state: puzzle_state, tiles):
                 canvas.create_text((x1+x2)//2, (y1+y2)//2, text=str(val), font=("Arial", 24, "bold"))
     canvas.update()
 
-def animate_move(canvas, state: puzzle_state, start_pos, end_pos):
+def animate_move(canvas, state: util.puzzle_state, start_pos, end_pos):
     """Animate a tile sliding from start_pos to end_pos."""
     arr = state.config
 
