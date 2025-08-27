@@ -1,10 +1,11 @@
 import numpy as np
 import puzzle_utilities as util
-import animate_solution
+import animate_solution as anim
 
 from numpy import linalg as la
 import pandas as pd
 import datetime
+import random
 import sys
 
 SIDE = int(sys.argv[1])
@@ -12,43 +13,22 @@ NUM_RUNS = int(sys.argv[2])
 
 HOME = (np.arange(SIDE**2)+1)%(SIDE**2)
 
+def random_state():
+    here = util.puzzle_state(HOME)
+    for i in range(100):
+        here = random.choice(util.moves(here))
+    here.parent = None
+    here.d = 0
+    return here
 
 
-def is_found(found_list: list, to_check: util.puzzle_state):
-    for s in found_list:
-        if np.array_equal(s.config, to_check.config):
-            return True
-    
-    return False
 
-
-def manhattan_total(arr):
-    sum = 0
-    for i in range(SIDE):
-        for j in range(SIDE):
-            val = arr[i, j]
-            if val != 0:
-                sum = sum + np.abs( int((val-1)/SIDE) - i) + np.abs( ((val-1)%SIDE) - j)
-    return sum
-
-def horz_inv(arr):
-    sum = 0
-    flat = arr.copy()
-    flat = arr.reshape(SIDE**2,)
-    for i in range(SIDE**2):
-        for j in range(i+1,SIDE**2):
-            if flat[i] > flat[j] and (flat[j]!=0) and (flat[i]!=0):
-                sum = sum + 1
-    return sum
-
-def inversion_dist(arr):
-    return horz_inv(arr) + horz_inv(arr.transpose())
 
 def heur(s: util.puzzle_state, w1: float, w2: float):
     flattened = s.config.copy()
     flattened = flattened.reshape(SIDE**2,)
 
-    return w1*s.d + w2*(manhattan_total(s.config) + inversion_dist(s.config) )
+    return w1*s.d + w2*(util.manhattan_total(s.config) + util.inversion_dist(s.config) )
     
 
 def get_path(end: util.puzzle_state):
@@ -64,23 +44,23 @@ def get_path(end: util.puzzle_state):
 def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_limit: int, w1: float, w2: float):
     qew = [init_state]
     min_heur = heur(init_state, w1=w1, w2=w2)
-    found_states = []
+    found_states = set()
     num_states_explored = 1
     sol_found = False
     flat_init = init_state.config.copy()
     flat_init = flat_init.reshape(SIDE**2,)
 
-    print('searching...\t\tsearch algorithm: wA-star\t\tw1=',w1,'w2=',w2)
+    print('searching...') #\t\tsearch algorithm: wA-star\t\tw1=',w1,'w2=',w2)
     start_time = datetime.datetime.now()
     while sol_found is False:        
         here = qew[0]
         qew = np.delete(qew,0)
-        found_states = np.append(found_states, here)
 
         # put nbrs in qew
         nbrs = util.moves(here) 
         for n in nbrs:
-            if not is_found(found_states, n):
+            if n not in found_states:
+                found_states.add(n)
                 qew = np.append(qew, n)
 
         qew = sorted(qew, key=lambda a: heur(a, w1=w1, w2=w2))
@@ -94,7 +74,6 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
             
             metrics = {'experiment_date': start_time.strftime('%Y/%m/%d'),
                'experiment_start_time': start_time.strftime('%H:%M:%S'),
-               'algorithm': 'wA-star',
                'w_1': w1,
                'w_2': w2,
                'size': SIDE,
@@ -138,20 +117,26 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
     df = pd.DataFrame([metrics])
     df.to_csv(path, index=False, mode='a', header=False)
 
-    return end
-
-
-
 metrics_path = '/Users/calebhill/Documents/misc_coding/search/variants.csv'
 
-find_sol_and_write_metrics(util.random_state(), path=metrics_path, upper_limit=2500, w1=0, w2=1)
 
-# print('\n****************************************************************************')
-# print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, '\tA-star weight of', A_STAR_FACTOR,'\tfocus factor of', FOCUS_FACTOR)
-# for i in range(NUM_RUNS):
-#     initial_state = random_state()
-#     print('---------------- Beginning problem number:', i,'----------------\n')
-#     for st in heuristics:
-#         fresh_copy = initial_state.copy()
-#         find_sol_w_focus(fresh_copy, path, search_type=st, upper_limit=2500, focus_factor=FOCUS_FACTOR)
-# print('---------------- Experiment finished. ----------------\n\n')
+print('\n***********************************************************************************************************************')
+print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE)
+for i in range(NUM_RUNS):
+    initial_state = random_state()
+    print('---------------- Beginning problem number:', i,'----------------\n')
+    fresh_copy = initial_state.copy()
+    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=0.0, w2=1.0, upper_limit=2500)       # pure heuristic
+    fresh_copy = initial_state.copy()
+    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.0, upper_limit=2500)       # usual A*
+    fresh_copy = initial_state.copy()
+    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.1, upper_limit=2500)       # weighted A*
+    fresh_copy = initial_state.copy()    
+    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.25, upper_limit=2500)      
+    fresh_copy = initial_state.copy()
+    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.5, upper_limit=2500)       
+
+
+print('---------------- Experiment finished. ----------------\n\n')
+
+
