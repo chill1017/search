@@ -79,8 +79,8 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
                'size': SIDE,
                'initial_state': ''.join(np.array2string(flat_init,edgeitems=2)[1:-1].split()),
                'initial_0_norm': int(la.norm( HOME - flat_init, 0 )),
-               'initial_taxi_norm': manhattan_total(init_state.config),
-               'initial_inv_norm': inversion_dist(init_state.config),
+               'initial_taxi_norm': util.manhattan_total(init_state.config),
+               'initial_inv_norm': util.inversion_dist(init_state.config),
                'num_states_explored': num_states_explored,
                'path_length': -1,
                'runtime': end_time-start_time
@@ -108,8 +108,8 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
                'size': SIDE,
                'initial_state': ''.join(np.array2string(flat_init,edgeitems=2)[1:-1].split()),
                'initial_0_norm': int(la.norm( HOME - flat_init, 0 )),
-               'initial_taxi_norm': manhattan_total(init_state.config),
-               'initial_inv_norm': inversion_dist(init_state.config),
+               'initial_taxi_norm': util.manhattan_total(init_state.config),
+               'initial_inv_norm': util.inversion_dist(init_state.config),
                'num_states_explored': num_states_explored,
                'path_length': end.d,
                'runtime': end_time-start_time
