@@ -4,40 +4,23 @@ import pandas as pd
 import datetime
 import random
 import time
+import sys
 import os
 
 greedy_0 = 'greedy 0-norm'
-greedy_1 = 'greedy 1-norm'
-# greedy_2 = 'greedy 2-norm'
-
 a_star_0 = 'A-star 0-norm'
-a_star_1 = 'A-star 1-norm'
-# a_star_2 = 'A-star 2-norm'
-
-# fifo_BFS = 'FIFO qeuw BFS'
 
 taxi_tot = 'taxicab total'
 a_star_t = 'A-star,  taxi'
 
-w_a_star_0 = 'weighted 0-norm A-star'
-w_a_star_1 = 'weighted 1-norm A-star'
-w_a_star_t = 'weighted taxi  A -star'
-
-weight_factor = 1.1
 heuristics = [greedy_0, 
-              greedy_1, 
               taxi_tot, 
-            #   a_star_0, 
-            #   a_star_1, 
-            #   a_star_t,
-              w_a_star_0,
-              w_a_star_1,
-              w_a_star_t]
+              a_star_0,
+              a_star_t]
 
-SIDE = 3
-DRAW = False
-TRUNCATE = False
-NUM_RUNS = 1
+SIDE = int(sys.argv[1])
+NUM_RUNS = int(sys.argv[2])
+A_STAR_FACTOR = float(sys.argv[3])
 
 
 HOME = (np.arange(SIDE**2)+1)%(SIDE**2)
@@ -265,6 +248,7 @@ def random_state():
     here = puzzle_state(HOME)
     for i in range(100):
         here = random.choice(moves(here))
+    here.parent = None
     return here
 
 def is_found(found_list: list, to_check: puzzle_state):
@@ -276,7 +260,6 @@ def is_found(found_list: list, to_check: puzzle_state):
 
 # chatGPT output for visualizing:
 import tkinter as tk
-import numpy as np
 import time
 
 TILE_SIZE = 80  # pixels
@@ -361,22 +344,12 @@ def heur(s: puzzle_state, search_type: str):
 
     if search_type == greedy_0:
         return la.norm( HOME - flattened, 0 )
-    elif search_type == greedy_1:
-        return la.norm( HOME - flattened, 1 )
     elif search_type == a_star_0:
-        return s.d + la.norm( HOME - flattened, 0 )
-    elif search_type == a_star_1:
-        return s.d + la.norm( HOME - flattened, 1 )
+        return s.d + A_STAR_FACTOR*la.norm( HOME - flattened, 0 )
     elif search_type == taxi_tot:
         return manhattan_total(s.config)
     elif search_type == a_star_t:
-        return s.d + manhattan_total(s.config)
-    elif search_type == w_a_star_0:
-        return s.d + weight_factor*la.norm( HOME - flattened, 0 )
-    elif search_type == w_a_star_1:
-        return s.d + weight_factor*la.norm( HOME - flattened, 1 )
-    elif search_type == w_a_star_t:
-        return s.d + weight_factor*manhattan_total(s.config)
+        return s.d + A_STAR_FACTOR*manhattan_total(s.config)
     else:
         return 1
 
@@ -397,6 +370,10 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
     sol_found = False
     flat_init = init_state.config.copy()
     flat_init = flat_init.reshape(SIDE**2,)
+    if search_type==a_star_0 or search_type==a_star_t:
+        weight = A_STAR_FACTOR
+    else:
+        weight = -1
 
     print('searching...\t\tsearch algorithm:', search_type)
     start_time = datetime.datetime.now()
@@ -413,9 +390,6 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
                 qew = np.append(qew, n)
 
         qew = sorted(qew, key=lambda a: heur(a,search_type))
-        if TRUNCATE is True:
-            if len(qew) > 1001:
-                qew = qew[0:1000]
 
         num_states_explored = num_states_explored+1
         if num_states_explored%1000==0:
@@ -423,13 +397,15 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
         if num_states_explored == upper_limit:
             print('experiment timeout.\n')
             end_time = datetime.datetime.now()
+            
             metrics = {'experiment_date': start_time.strftime('%Y/%m/%d'),
                'experiment_start_time': start_time.strftime('%H:%M:%S'),
                'algorihm': search_type,
+               'a_star_factor': weight,
                'size': SIDE,
                'initial_state': ''.join(np.array2string(flat_init,edgeitems=2)[1:-1].split()),
-               'initial 0-norm': int(la.norm( HOME - flat_init, 0 )),
-               'truncated_qew': TRUNCATE,
+               'initial_0_norm': int(la.norm( HOME - flat_init, 0 )),
+               'initial_taxi_norm': manhattan_total(init_state.config),
                'num_states_explored': num_states_explored,
                'path_length': -1,
                'runtime': end_time-start_time
@@ -454,10 +430,11 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
     metrics = {'experiment_date': start_time.strftime('%Y/%m/%d'),
                'experiment_start_time': start_time.strftime('%H:%M:%S'),
                'algorihm': search_type,
+               'a_star_factor': weight,
                'size': SIDE,
                'initial_state': ''.join(np.array2string(flat_init,edgeitems=2)[1:-1].split()),
-               'initial 0-norm': int(la.norm( HOME - flat_init, 0 )),
-               'truncated_qew': TRUNCATE,
+               'initial_0_norm': int(la.norm( HOME - flat_init, 0 )),
+               'initial_taxi_norm': manhattan_total(init_state.config),
                'num_states_explored': num_states_explored,
                'path_length': len(p),
                'runtime': end_time-start_time
@@ -472,10 +449,16 @@ def find_sol(init_state: puzzle_state, path: str, search_type: str, upper_limit:
 
 path = '/Users/calebhill/Documents/misc_coding/search/experimental_outputs.csv'
 
+# start_from = puzzle_state(np.array([4,6,5,8,7,1,0,3,2]))
+# find_sol(start_from, path, search_type=a_star_t, upper_limit=10000)
+
+print('**************************************************')
+print('Starting', NUM_RUNS, 'runs with puzzle size', SIDE, 'and A-star weight of', A_STAR_FACTOR)
 for i in range(NUM_RUNS):
-    initial_state = puzzle_state(np.array([5,7,3,1,8,4,6,2,0]))
+    initial_state = random_state()
     print('-------- Beginning problem number:', i,'--------\n')
     for st in heuristics:
-        find_sol(initial_state, path, search_type=st, upper_limit=10000)
+        fresh_copy = initial_state.copy()
+        find_sol(fresh_copy, path, search_type=st, upper_limit=10000)
 print('-------- Experiment finished. --------\n\n')
 

@@ -50,7 +50,7 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
     flat_init = init_state.config.copy()
     flat_init = flat_init.reshape(SIDE**2,)
 
-    print('searching...') #\t\tsearch algorithm: wA-star\t\tw1=',w1,'w2=',w2)
+    print('searching...\t\t\t\tw1 =',w1,'\tw2 =',w2) #\t\tsearch algorithm: wA-star\t\tw1=',w1,'w2=',w2)
     start_time = datetime.datetime.now()
     while sol_found is False:        
         here = qew[0]
@@ -86,7 +86,7 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
                'runtime': end_time-start_time
                }
             df = pd.DataFrame([metrics])
-            df.to_csv(path, index=False, mode='a', header=False)
+            df.to_csv(path+'_'+str(SIDE)+'.csv', index=False, mode='a', header=False)
             return 1
 
         flattened = here.config.copy()
@@ -115,9 +115,9 @@ def find_sol_and_write_metrics(init_state: util.puzzle_state, path: str, upper_l
                'runtime': end_time-start_time
                }
     df = pd.DataFrame([metrics])
-    df.to_csv(path, index=False, mode='a', header=False)
+    df.to_csv(path+'_'+str(SIDE)+'.csv', index=False, mode='a', header=False)
 
-metrics_path = '/Users/calebhill/Documents/misc_coding/search/variants.csv'
+metrics_path = '/Users/calebhill/Documents/misc_coding/search/variants'
 
 
 print('\n***********************************************************************************************************************')
@@ -127,14 +127,14 @@ for i in range(NUM_RUNS):
     print('---------------- Beginning problem number:', i,'----------------\n')
     fresh_copy = initial_state.copy()
     find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=0.0, w2=1.0, upper_limit=2500)       # pure heuristic
-    fresh_copy = initial_state.copy()
-    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.0, upper_limit=2500)       # usual A*
-    fresh_copy = initial_state.copy()
-    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.1, upper_limit=2500)       # weighted A*
-    fresh_copy = initial_state.copy()    
-    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.25, upper_limit=2500)      
-    fresh_copy = initial_state.copy()
-    find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.5, upper_limit=2500)       
+    # fresh_copy = initial_state.copy()
+    # find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.0, upper_limit=2500)       # usual A*
+    # fresh_copy = initial_state.copy()
+    # find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.1, upper_limit=2500)       # weighted A*
+    # fresh_copy = initial_state.copy()    
+    # find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.25, upper_limit=2500)      
+    # fresh_copy = initial_state.copy()
+    # find_sol_and_write_metrics(fresh_copy, path=metrics_path, w1=1.0, w2=1.5, upper_limit=2500)       
 
 
 print('---------------- Experiment finished. ----------------\n\n')
